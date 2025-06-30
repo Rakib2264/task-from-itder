@@ -240,7 +240,7 @@ $(document).ready(function() {
             clearCart();
         }
     });
-
+ updateCartItem();
     function updateCartItem(cartId, quantity) {
         $.ajaxSetup({
             headers: {

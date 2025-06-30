@@ -9,7 +9,7 @@ class Cart extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'product_id', 'quantity', 'price'];
+    protected $fillable = ['user_id', 'product_id', 'quantity', 'price','total'];
 
     protected $casts = ['price' => 'decimal:2'];
 
