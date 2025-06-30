@@ -101,65 +101,77 @@ class CartController extends Controller
         }
     }
 
-    public function update(Request $request, Cart $cart)
-    {
-        $request->validate([
-            'quantity' => 'required|integer|min:1'
-        ]);
-
+  public function update(Request $request, Cart $cart)
+{
+    try {
+        $request->validate(['quantity' => 'required|integer|min:1']);
+        
         if ($cart->user_id !== auth()->id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action'
+            ], 403);
         }
 
         if ($cart->product->stock < $request->quantity) {
             return response()->json([
-                'error' => 'Insufficient stock',
+                'success' => false,
+                'message' => 'Insufficient stock available',
                 'available_stock' => $cart->product->stock
             ], 400);
         }
 
-        // Calculate new total
-        $newTotal = $cart->price * $request->quantity;
-
         $cart->update([
             'quantity' => $request->quantity,
-            'total' => $newTotal // Update total column
+            'total' => $cart->price * $request->quantity
         ]);
-
-        $grandTotal = Cart::where('user_id', auth()->id())->sum('total');
-        $cartCount = Cart::where('user_id', auth()->id())->count();
 
         return response()->json([
             'success' => true,
             'message' => 'Cart updated successfully',
-            'item_total' => $newTotal,
-            'grand_total' => $grandTotal,
-            'cart_count' => $cartCount,
-            'product_stock' => $cart->product->stock - $request->quantity
+            'item_total' => $cart->total,
+            'grand_total' => Cart::where('user_id', auth()->id())->sum('total'),
+            'cart_count' => Cart::where('user_id', auth()->id())->count()
         ]);
-    }
 
-    public function destroy(Cart $cart)
-    {
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update cart: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+public function destroy(Cart $cart)
+{
+    try {
         if ($cart->user_id !== auth()->id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action'
+            ], 403);
         }
 
         $cart->delete();
         
-        $grandTotal = Cart::where('user_id', auth()->id())->sum('total');
-        $cartCount = Cart::where('user_id', auth()->id())->count();
-
         return response()->json([
             'success' => true,
             'message' => 'Item removed from cart',
-            'grand_total' => $grandTotal,
-            'cart_count' => $cartCount
+            'grand_total' => Cart::where('user_id', auth()->id())->sum('total'),
+            'cart_count' => Cart::where('user_id', auth()->id())->count()
         ]);
-    }
 
-    public function clear()
-    {
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to remove item: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+public function clear()
+{
+    try {
         Cart::where('user_id', auth()->id())->delete();
         
         return response()->json([
@@ -168,7 +180,14 @@ class CartController extends Controller
             'grand_total' => 0,
             'cart_count' => 0
         ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to clear cart: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     public function count()
     {

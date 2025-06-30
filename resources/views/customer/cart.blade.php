@@ -240,42 +240,138 @@ $(document).ready(function() {
             clearCart();
         }
     });
- updateCartItem();
-    function updateCartItem(cartId, quantity) {
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-
-        $.ajax({
-            url: `/cart/${cartId}`,
-            method: 'PATCH',
-            data: { quantity: quantity },
-            success: function(response) {
-                // Update item total
-                $(`tr[data-cart-id="${cartId}"] .item-total`).text(`$${response.item_total.toFixed(2)}`);
-                
-                // Update grand totals
+ function updateCartItem(cartId, quantity) {
+    const $row = $(`tr[data-cart-id="${cartId}"]`);
+    const $input = $row.find('.quantity-input');
+    
+    $.ajax({
+        url: `/cart/${cartId}`,
+        method: 'PATCH',
+        data: { quantity: quantity },
+        success: function(response) {
+            if (response.success) {
+                $row.find('.item-total').text(`$${response.item_total.toFixed(2)}`);
                 $('#subtotal').text(`$${response.grand_total.toFixed(2)}`);
                 $('#grand-total').text(`$${response.grand_total.toFixed(2)}`);
                 
-                // Update cart count in navbar
-                $('#cart-count').text(response.cart_count);
+                if (response.cart_count !== undefined) {
+                    $('#cart-count').text(response.cart_count);
+                }
                 
-                // Update the modal total if it's open
                 if ($('#checkoutModal').hasClass('show')) {
                     $('.modal-body .alert strong').text(`Order Total: $${response.grand_total.toFixed(2)}`);
                 }
                 
-                showToast('success', response.message);
-            },
-            error: function(xhr) {
-                const response = xhr.responseJSON;
-                showToast('error', response.error);
+                showToast('success', response.message || 'Quantity updated successfully');
+            } else {
+                $input.val($input.data('original-value'));
+                showToast('error', response.message || 'Failed to update quantity');
             }
+        },
+        error: function(xhr) {
+            $input.val($input.data('original-value'));
+            const response = xhr.responseJSON;
+            showToast('error', 
+                response?.message || 
+                response?.error || 
+                'Error updating cart item. Please try again.'
+            );
+        }
+    });
+}
+
+function removeCartItem(cartId) {
+    $.ajax({
+        url: `/cart/${cartId}`,
+        method: 'DELETE',
+        success: function(response) {
+            if (response.success) {
+                $(`tr[data-cart-id="${cartId}"]`).remove();
+                
+                $('#subtotal').text(`$${response.grand_total.toFixed(2)}`);
+                $('#grand-total').text(`$${response.grand_total.toFixed(2)}`);
+                
+                if (response.cart_count !== undefined) {
+                    $('#cart-count').text(response.cart_count);
+                }
+                
+                const itemCount = parseInt($('.card-header h5').text().match(/\d+/)[0]) - 1;
+                $('.card-header h5').text(`Cart Items (${itemCount})`);
+                
+                if (itemCount === 0) {
+                    location.reload();
+                }
+                
+                showToast('success', response.message || 'Item removed from cart');
+            } else {
+                showToast('error', response.message || 'Failed to remove item');
+            }
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            showToast('error', 
+                response?.message || 
+                response?.error || 
+                'Error removing item. Please try again.'
+            );
+        }
+    });
+}
+
+function clearCart() {
+    $.ajax({
+        url: '/cart/clear',
+        method: 'DELETE',
+        success: function(response) {
+            if (response.success) {
+                location.reload();
+            } else {
+                showToast('error', response.message || 'Failed to clear cart');
+            }
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            showToast('error', 
+                response?.message || 
+                response?.error || 
+                'Error clearing cart. Please try again.'
+            );
+        }
+    });
+}
+
+function showToast(type, message) {
+    // Remove any existing toasts
+    $('.alert-toast').remove();
+    
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+    
+    const toast = `
+        <div class="alert ${alertClass} alert-dismissible fade show alert-toast position-fixed" 
+             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+            <i class="fas ${icon} me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    $('body').append(toast);
+    
+    setTimeout(function() {
+        $('.alert-toast').fadeOut(400, function() {
+            $(this).remove();
         });
-    }
+    }, 3000);
+}
+
+// Store original values when page loads
+$(document).ready(function() {
+    $('.quantity-input').each(function() {
+        $(this).data('original-value', $(this).val());
+    });
+    
+    // Rest of your document.ready code...
+});
 
     function removeCartItem(cartId) {
         $.ajaxSetup({
@@ -314,50 +410,6 @@ $(document).ready(function() {
                 showToast('error', response.error);
             }
         });
-    }
-
-    function clearCart() {
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-
-        $.ajax({
-            url: '/cart/clear',
-            method: 'DELETE',
-            success: function(response) {
-                location.reload();
-            },
-            error: function(xhr) {
-                const response = xhr.responseJSON;
-                showToast('error', response.error);
-            }
-        });
-    }
-
-    function showToast(type, message) {
-        // Remove any existing toasts
-        $('.alert-toast').remove();
-        
-        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-        
-        const toast = `
-            <div class="alert ${alertClass} alert-dismissible fade show alert-toast position-fixed" 
-                 style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
-                <i class="fas ${icon} me-2"></i>${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        
-        $('body').append(toast);
-        
-        setTimeout(function() {
-            $('.alert-toast').fadeOut(400, function() {
-                $(this).remove();
-            });
-        }, 3000);
     }
 });
 </script>

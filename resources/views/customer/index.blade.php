@@ -148,30 +148,75 @@ function addToCart(productId) {
             quantity: 1
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => Promise.reject(err));
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             // Update cart count in navbar
-            if (data.cart_count) {
-                document.getElementById('cart-count').textContent = data.cart_count;
-            }
+            updateCartCount(data.cart_count);
             
-            // Show Bootstrap toast notification
-            const toast = new bootstrap.Toast(document.getElementById('cartToast'));
-            document.getElementById('toastMessage').textContent = data.message || 'Product added to cart!';
-            toast.show();
+            // Show toast notification
+            showToast('success', data.message || 'Product added to cart!');
         } else {
-            alert(data.error || 'Failed to add product to cart');
+            showToast('error', data.error || 'Failed to add product to cart');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error adding product to cart');
+        showToast('error', error.message || 'Error adding product to cart');
     })
     .finally(() => {
         button.innerHTML = originalHTML;
         button.disabled = false;
     });
+}
+
+// Function to update cart count everywhere
+function updateCartCount(count) {
+    // Update navbar badge
+    const badge = document.getElementById('cart-count-badge');
+    if (badge) {
+        badge.textContent = count;
+        badge.classList.add('animate__animated', 'animate__bounceIn');
+        setTimeout(() => {
+            badge.classList.remove('animate__animated', 'animate__bounceIn');
+        }, 1000);
+    }
+    
+    // Update any other elements that show cart count
+    const cartCountElements = document.querySelectorAll('.cart-count');
+    cartCountElements.forEach(el => {
+        el.textContent = count;
+    });
+}
+
+// Improved toast notification
+function showToast(type, message) {
+    // Remove any existing toasts
+    const existingToasts = document.querySelectorAll('.custom-toast');
+    existingToasts.forEach(toast => toast.remove());
+    
+    const toast = document.createElement('div');
+    toast.className = `custom-toast position-fixed top-4 end-4 z-50 px-4 py-3 rounded shadow-lg text-white ${
+        type === 'success' ? 'bg-success' : 'bg-danger'
+    }`;
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
+            <span>${message}</span>
+            <button type="button" class="btn-close btn-close-white ms-3" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
 }
 </script>
 
