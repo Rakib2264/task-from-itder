@@ -9,16 +9,14 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 
-// Home Route
 Route::get('/', [CustomerController::class, 'index'])->name('home');
 
-// Authentication Routes
 Route::group(['prefix' => 'auth'], function () {
     // Admin Login
     Route::get('/admin/login', [AuthController::class, 'showAdminLogin'])->name('admin.login');
     Route::post('/admin/login', [AuthController::class, 'adminLogin']);
     
-    // Customer Login & Register
+    // Login & Register
     Route::get('/login', [AuthController::class, 'showCustomerLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'customerLogin']);
     Route::get('/register', [AuthController::class, 'showCustomerRegister'])->name('register');
@@ -44,7 +42,6 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'a
     Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
 });
 
-// Customer Routes
 Route::group(['middleware' => 'auth'], function () {
     Route::get('/dashboard', [CustomerController::class, 'dashboard'])->name('customer.dashboard');
     
@@ -53,6 +50,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
     Route::patch('/cart/{cart}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{cart}', [CartController::class, 'destroy'])->name('cart.destroy');
+    Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count');
     
     // Orders
     Route::get('/orders', [OrderController::class, 'index'])->name('customer.orders');
@@ -60,5 +58,4 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 });
 
-// Product Detail (accessible without login)
 Route::get('/products/{product}', [CustomerController::class, 'show'])->name('products.show');

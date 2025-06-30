@@ -1,5 +1,4 @@
-<!-- resources/views/admin/categories/create.blade.php -->
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Add Category')
 

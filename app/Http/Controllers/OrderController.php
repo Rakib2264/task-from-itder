@@ -30,17 +30,54 @@ class OrderController extends Controller
 
         return back()->with('success', 'Order status updated successfully');
     }
+public function store(Request $request)
+{
+    $user = auth()->user();
+    
+    $request->validate([
+        'shipping_address' => 'required|string',
+        'notes' => 'nullable|string',
+    ]);
 
-    public function store(Request $request)
-    {
-        dd($request->all());
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'status' => 'required|in:pending,approved,declined'
-        ]);
-
-        Order::create($request->all());
-
-        return back()->with('success', 'Order created successfully');
+    // Get the user's cart items
+    $carts = $user->carts()->with('product')->get();
+    
+    if ($carts->isEmpty()) {
+        return back()->with('error', 'Your cart is empty');
     }
+
+    // Calculate total amount
+    $totalAmount = $carts->sum(function($cart) {
+        return $cart->price * $cart->quantity;
+    });
+
+
+    // Create order
+    $order = Order::create([
+        'user_id' => $user->id,
+        'order_number' => 'ORD-' . strtoupper(uniqid()),
+        'total_amount' => $totalAmount,
+        'status' => 'pending',
+        'shipping_address' => $request->shipping_address,
+        'notes' => $request->notes,
+    ]);
+
+    // Add order items
+    foreach ($carts as $cart) {
+        $order->items()->create([
+            'product_id' => $cart->product_id,
+            'quantity' => $cart->quantity,
+            'price' => $cart->price,
+        ]);
+        
+        // Update product stock
+        $cart->product->decrement('stock', $cart->quantity);
+    }
+
+    // Clear the cart
+    $user->carts()->delete();
+
+    return redirect()->route('customer.orders')->with('success', 'Order placed successfully!');
+}
+
 }

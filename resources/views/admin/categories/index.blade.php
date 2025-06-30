@@ -1,5 +1,4 @@
-<!-- resources/views/admin/categories/index.blade.php -->
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Categories Management')
 

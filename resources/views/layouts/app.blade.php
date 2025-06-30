@@ -1,4 +1,3 @@
-<!-- resources/views/layouts/app.blade.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,11 +36,14 @@
                                 </a>
                             </li>
                         @else
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('cart.index') }}">
-                                    <i class="fas fa-shopping-cart"></i> Cart
-                                </a>
-                            </li>
+                       <li class="nav-item">
+                        <a class="nav-link" href="{{ route('cart.index') }}">
+                            <i class="fas fa-shopping-cart"></i> Cart
+                            <span class="badge bg-danger rounded-pill" id="cart-count-badge">
+                                {{ auth()->check() ? auth()->user()->carts->count() : 0 }}
+                            </span>
+                        </a>
+                    </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('customer.dashboard') }}">Dashboard</a>
                             </li>
@@ -98,6 +100,43 @@
             }
         });
     </script>
+    <script>
+// Function to update cart count
+function updateCartCount(count) {
+    const badge = document.getElementById('cart-count-badge');
+    if (badge) {
+        badge.textContent = count;
+        
+        // Add animation
+        badge.classList.add('animate__animated', 'animate__bounceIn');
+        setTimeout(() => {
+            badge.classList.remove('animate__animated', 'animate__bounceIn');
+        }, 1000);
+    }
+}
+
+// Listen for cart updates (using Laravel Echo for real-time)
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial cart count
+    fetchCartCount();
+    
+    // Listen for custom events (triggered after AJAX cart operations)
+    document.addEventListener('cartUpdated', function(e) {
+        updateCartCount(e.detail.count);
+    });
+});
+
+// Fetch initial cart count
+function fetchCartCount() {
+    if (!document.getElementById('cart-count-badge')) return;
+    
+    fetch('{{ route("cart.count") }}')
+        .then(response => response.json())
+        .then(data => {
+            updateCartCount(data.count);
+        });
+}
+</script>
     @stack('scripts')
 </body>
 </html>

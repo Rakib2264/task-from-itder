@@ -1,149 +1,3 @@
-{{-- resources/views/layouts/app.blade.php --}}
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    
-    <title>{{ config('app.name', 'E-Commerce') }}</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    @stack('styles')
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="{{ route('home') }}">
-                <i class="fas fa-store me-2"></i>E-Commerce
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('home') }}">Home</a>
-                    </li>
-                </ul>
-                
-                <ul class="navbar-nav">
-                    @auth
-                        @if(auth()->user()->isAdmin())
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('admin.dashboard') }}">
-                                    <i class="fas fa-tachometer-alt me-1"></i>Admin Dashboard
-                                </a>
-                            </li>
-                        @else
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('cart.index') }}">
-                                    <i class="fas fa-shopping-cart me-1"></i>Cart
-                                    <span class="badge bg-warning text-dark" id="cart-count">0</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('customer.orders') }}">
-                                    <i class="fas fa-box me-1"></i>My Orders
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('customer.dashboard') }}">
-                                    <i class="fas fa-user me-1"></i>Dashboard
-                                </a>
-                            </li>
-                        @endif
-                        <li class="nav-item">
-                            <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                                @csrf
-                                <button type="submit" class="nav-link btn btn-link text-light">
-                                    <i class="fas fa-sign-out-alt me-1"></i>Logout
-                                </button>
-                            </form>
-                        </li>
-                    @else
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('login') }}">
-                                <i class="fas fa-sign-in-alt me-1"></i>Login
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('register') }}">
-                                <i class="fas fa-user-plus me-1"></i>Register
-                            </a>
-                        </li>
-                    @endauth
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="py-4">
-        <div class="container">
-            <!-- Flash Messages -->
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-
-            @if($errors->any())
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <ul class="mb-0">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-
-            @yield('content')
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-dark text-light py-4 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>E-Commerce Store</h5>
-                    <p>Your one-stop shop for everything you need.</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <p>&copy; {{ date('Y') }} E-Commerce. All rights reserved.</p>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    @stack('scripts')
-</body>
-</html>
-
-{{-- resources/views/customer/cart.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
@@ -336,9 +190,15 @@ $(document).ready(function() {
         const cartId = $(this).data('cart-id');
         const input = $(`.quantity-input[data-cart-id="${cartId}"]`);
         let quantity = parseInt(input.val());
+        const maxStock = parseInt(input.attr('max'));
         
         if ($(this).hasClass('increase-qty')) {
-            quantity++;
+            if (quantity < maxStock) {
+                quantity++;
+            } else {
+                showToast('error', 'Cannot exceed available stock');
+                return;
+            }
         } else {
             quantity = Math.max(1, quantity - 1);
         }
@@ -351,9 +211,17 @@ $(document).ready(function() {
     $('.quantity-input').change(function() {
         const cartId = $(this).data('cart-id');
         const quantity = parseInt($(this).val());
+        const maxStock = parseInt($(this).attr('max'));
         
-        if (quantity > 0) {
+        if (quantity > maxStock) {
+            showToast('error', 'Cannot exceed available stock');
+            $(this).val(maxStock);
+            updateCartItem(cartId, maxStock);
+        } else if (quantity > 0) {
             updateCartItem(cartId, quantity);
+        } else {
+            $(this).val(1);
+            updateCartItem(cartId, 1);
         }
     });
 
@@ -369,11 +237,7 @@ $(document).ready(function() {
     // Clear cart
     $('#clear-cart').click(function() {
         if (confirm('Are you sure you want to clear your entire cart?')) {
-            $('.remove-item').each(function() {
-                const cartId = $(this).data('cart-id');
-                removeCartItem(cartId, false);
-            });
-            location.reload();
+            clearCart();
         }
     });
 
@@ -390,23 +254,30 @@ $(document).ready(function() {
             data: { quantity: quantity },
             success: function(response) {
                 // Update item total
-                $(`.item-total[data-cart-id="${cartId}"]`).text(`$${response.total}`);
+                $(`tr[data-cart-id="${cartId}"] .item-total`).text(`$${response.item_total.toFixed(2)}`);
                 
-                // Update grand total
-                $('#subtotal').text(`$${response.grand_total}`);
-                $('#grand-total').text(`$${response.grand_total}`);
+                // Update grand totals
+                $('#subtotal').text(`$${response.grand_total.toFixed(2)}`);
+                $('#grand-total').text(`$${response.grand_total.toFixed(2)}`);
                 
-                // Show success message
-                showToast('success', response.success);
+                // Update cart count in navbar
+                $('#cart-count').text(response.cart_count);
+                
+                // Update the modal total if it's open
+                if ($('#checkoutModal').hasClass('show')) {
+                    $('.modal-body .alert strong').text(`Order Total: $${response.grand_total.toFixed(2)}`);
+                }
+                
+                showToast('success', response.message);
             },
             error: function(xhr) {
-                const response = JSON.parse(xhr.responseText);
+                const response = xhr.responseJSON;
                 showToast('error', response.error);
             }
         });
     }
 
-    function removeCartItem(cartId, reload = true) {
+    function removeCartItem(cartId) {
         $.ajaxSetup({
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -417,23 +288,63 @@ $(document).ready(function() {
             url: `/cart/${cartId}`,
             method: 'DELETE',
             success: function(response) {
-                if (reload) {
+                // Remove the row
+                $(`tr[data-cart-id="${cartId}"]`).remove();
+                
+                // Update grand totals
+                $('#subtotal').text(`$${response.grand_total.toFixed(2)}`);
+                $('#grand-total').text(`$${response.grand_total.toFixed(2)}`);
+                
+                // Update cart count in navbar
+                $('#cart-count').text(response.cart_count);
+                
+                // Update item count in header
+                const itemCount = parseInt($('.card-header h5').text().match(/\d+/)[0]) - 1;
+                $('.card-header h5').text(`Cart Items (${itemCount})`);
+                
+                // If cart is empty, reload to show empty cart message
+                if (itemCount === 0) {
                     location.reload();
                 }
+                
+                showToast('success', response.message);
             },
             error: function(xhr) {
-                const response = JSON.parse(xhr.responseText);
+                const response = xhr.responseJSON;
+                showToast('error', response.error);
+            }
+        });
+    }
+
+    function clearCart() {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        $.ajax({
+            url: '/cart/clear',
+            method: 'DELETE',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
                 showToast('error', response.error);
             }
         });
     }
 
     function showToast(type, message) {
+        // Remove any existing toasts
+        $('.alert-toast').remove();
+        
         const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
         const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
         
         const toast = `
-            <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+            <div class="alert ${alertClass} alert-dismissible fade show alert-toast position-fixed" 
                  style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
                 <i class="fas ${icon} me-2"></i>${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -443,7 +354,9 @@ $(document).ready(function() {
         $('body').append(toast);
         
         setTimeout(function() {
-            $('.alert').fadeOut();
+            $('.alert-toast').fadeOut(400, function() {
+                $(this).remove();
+            });
         }, 3000);
     }
 });

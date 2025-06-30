@@ -1,16 +1,15 @@
-{{-- resources/views/customer/index.blade.php --}}
 @extends('layouts.app')
 
 @section('title', 'Home - E-commerce Store')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
+<div class="container py-4">
     {{-- Hero Section --}}
-    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-8 mb-8">
-        <div class="max-w-2xl">
-            <h1 class="text-4xl font-bold mb-4">Welcome to Our Store</h1>
-            <p class="text-xl mb-6">Discover amazing products at great prices</p>
-            <a href="#products" class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition duration-300">
+    <div class="bg-primary text-white rounded-3 p-5 mb-4" style="background: linear-gradient(to right, #0d6efd, #6f42c1);">
+        <div class="col-lg-8">
+            <h1 class="display-4 fw-bold mb-3">Welcome to Our Store</h1>
+            <p class="lead mb-4">Discover amazing products at great prices</p>
+            <a href="#products" class="btn btn-light btn-lg text-primary fw-bold">
                 Shop Now
             </a>
         </div>
@@ -18,20 +17,24 @@
 
     {{-- Categories Section --}}
     @if($categories->count() > 0)
-    <div class="mb-12">
-        <h2 class="text-3xl font-bold text-gray-800 mb-6">Shop by Category</h2>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div class="mb-5">
+        <h2 class="display-5 fw-bold text-dark mb-4">Shop by Category</h2>
+        <div class="row g-3">
             @foreach($categories as $category)
-            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition duration-300 p-4 text-center">
-                @if($category->image)
-                    <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" class="w-16 h-16 mx-auto mb-3 rounded-full object-cover">
-                @else
-                    <div class="w-16 h-16 mx-auto mb-3 bg-gray-200 rounded-full flex items-center justify-center">
-                        <i class="fas fa-folder text-gray-500 text-xl"></i>
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="card h-100 shadow-sm hover-shadow transition">
+                    <div class="card-body text-center">
+                        @if($category->image)
+                            <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" class="img-fluid rounded-circle mb-3" style="width: 80px; height: 80px; object-fit: cover;">
+                        @else
+                            <div class="bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="fas fa-folder text-muted fs-4"></i>
+                            </div>
+                        @endif
+                        <h5 class="fw-semibold text-dark mb-1">{{ $category->name }}</h5>
+                        <p class="text-muted small">{{ $category->products->count() }} items</p>
                     </div>
-                @endif
-                <h3 class="font-semibold text-gray-800">{{ $category->name }}</h3>
-                <p class="text-sm text-gray-600 mt-1">{{ $category->products->count() }} items</p>
+                </div>
             </div>
             @endforeach
         </div>
@@ -40,64 +43,66 @@
 
     {{-- Products Section --}}
     <div id="products">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-3xl font-bold text-gray-800">Featured Products</h2>
-            <div class="text-sm text-gray-600">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="display-5 fw-bold text-dark">Featured Products</h2>
+            <div class="text-muted small">
                 Showing {{ $products->count() }} of {{ $products->total() }} products
             </div>
         </div>
 
         @if($products->count() > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div class="row g-4">
                 @foreach($products as $product)
-                <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition duration-300 overflow-hidden">
-                    <a href="{{ route('products.show', $product) }}">
-                        @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-48 object-cover">
-                        @else
-                            <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                                <i class="fas fa-image text-gray-400 text-3xl"></i>
-                            </div>
-                        @endif
-                    </a>
-                    
-                    <div class="p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">{{ $product->category->name }}</span>
-                            @if($product->stock > 0)
-                                <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">In Stock</span>
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                    <div class="card h-100 shadow-sm hover-shadow transition">
+                        <a href="{{ route('products.show', $product) }}">
+                            @if($product->image)
+                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="card-img-top" style="height: 200px; object-fit: cover;">
                             @else
-                                <span class="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">Out of Stock</span>
+                                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="fas fa-image text-muted fs-1"></i>
+                                </div>
                             @endif
-                        </div>
+                        </a>
                         
-                        <h3 class="font-semibold text-gray-800 mb-2">
-                            <a href="{{ route('products.show', $product) }}" class="hover:text-blue-600 transition duration-300">
-                                {{ $product->name }}
-                            </a>
-                        </h3>
-                        
-                        @if($product->description)
-                            <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ Str::limit($product->description, 80) }}</p>
-                        @endif
-                        
-                        <div class="flex items-center justify-between">
-                            <span class="text-xl font-bold text-gray-800">${{ number_format($product->price, 2) }}</span>
-                            @auth
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-primary bg-opacity-10 text-primary">{{ $product->category->name }}</span>
                                 @if($product->stock > 0)
-                                    <button onclick="addToCart({{ $product->id }})" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-300">
-                                        <i class="fas fa-shopping-cart mr-1"></i> Add to Cart
-                                    </button>
+                                    <span class="badge bg-success bg-opacity-10 text-success">In Stock</span>
                                 @else
-                                    <button disabled class="bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
-                                        Out of Stock
-                                    </button>
+                                    <span class="badge bg-danger bg-opacity-10 text-danger">Out of Stock</span>
                                 @endif
-                            @else
-                                <a href="{{ route('login') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-300">
-                                    Login to Buy
+                            </div>
+                            
+                            <h5 class="card-title fw-semibold">
+                                <a href="{{ route('products.show', $product) }}" class="text-decoration-none text-dark hover-primary">
+                                    {{ $product->name }}
                                 </a>
-                            @endauth
+                            </h5>
+                            
+                            @if($product->description)
+                                <p class="card-text text-muted small mb-3">{{ Str::limit($product->description, 80) }}</p>
+                            @endif
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fs-5 fw-bold text-dark">${{ number_format($product->price, 2) }}</span>
+                                @auth
+                                    @if($product->stock > 0)
+                                        <button onclick="addToCart({{ $product->id }})" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-shopping-cart me-1"></i> Add to Cart
+                                        </button>
+                                    @else
+                                        <button class="btn btn-secondary btn-sm" disabled>
+                                            Out of Stock
+                                        </button>
+                                    @endif
+                                @else
+                                    <a href="{{ route('login') }}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-lock me-1"></i> Login to Buy
+                                    </a>
+                                @endauth
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -105,14 +110,16 @@
             </div>
 
             {{-- Pagination --}}
-            <div class="mt-8">
-                {{ $products->links() }}
+            <div class="mt-4 d-flex justify-content-center">
+                {{ $products->links('pagination::bootstrap-5') }}
             </div>
         @else
-            <div class="text-center py-12">
-                <i class="fas fa-box-open text-6xl text-gray-400 mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-600 mb-2">No Products Found</h3>
-                <p class="text-gray-500">Check back later for new products!</p>
+            <div class="text-center py-5">
+                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px;">
+                    <i class="fas fa-box-open text-muted fs-1"></i>
+                </div>
+                <h3 class="h4 fw-semibold text-dark mb-2">No Products Found</h3>
+                <p class="text-muted">Check back later for new products!</p>
             </div>
         @endif
     </div>
@@ -122,11 +129,19 @@
 @auth
 <script>
 function addToCart(productId) {
+    const button = event.currentTarget;
+    const originalHTML = button.innerHTML;
+    
+    // Show loading state
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Adding...';
+    button.disabled = true;
+    
     fetch('{{ route("cart.store") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
         },
         body: JSON.stringify({
             product_id: productId,
@@ -136,16 +151,54 @@ function addToCart(productId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Product added to cart successfully!');
+            // Update cart count in navbar
+            if (data.cart_count) {
+                document.getElementById('cart-count').textContent = data.cart_count;
+            }
+            
+            // Show Bootstrap toast notification
+            const toast = new bootstrap.Toast(document.getElementById('cartToast'));
+            document.getElementById('toastMessage').textContent = data.message || 'Product added to cart!';
+            toast.show();
         } else {
-            alert(data.error || 'Error adding product to cart');
+            alert(data.error || 'Failed to add product to cart');
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Error adding product to cart');
+    })
+    .finally(() => {
+        button.innerHTML = originalHTML;
+        button.disabled = false;
     });
 }
 </script>
+
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="cartToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage"></div>
+    </div>
+</div>
 @endauth
+
+<style>
+    .hover-shadow {
+        transition: box-shadow 0.3s ease;
+    }
+    .hover-shadow:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    .hover-primary:hover {
+        color: #0d6efd !important;
+    }
+    .transition {
+        transition: all 0.3s ease;
+    }
+</style>
 @endsection

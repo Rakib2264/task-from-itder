@@ -1,4 +1,3 @@
-<!-- resources/views/auth/admin-login.blade.php -->
 @extends('layouts.app')
 
 @section('title', 'Admin Login')
